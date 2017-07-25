@@ -22,20 +22,21 @@ const (
 	errorType
 )
 
+type SlackboyTags map[string]string
+
 type Message struct {
 	Channel         string
 	Text            string
+	Snippet         string
 	AttachmentColor string
-	AttachmentText  string
+	Tags            []string
 }
 
 type messageMap map[int]*Message
 
-type SlackboyTags map[string]string
-
 type Options struct {
-	Env  string
-	Tags SlackboyTags
+	Env         string
+	DefaultTags []string
 
 	WebhookURL     string
 	DefaultChannel string
@@ -69,10 +70,11 @@ func (s *SlackBoy) getMessage(msgType int) *Message {
 	return &Message{}
 }
 
-func (s *SlackBoy) Success(text, snip string) {
+func (s *SlackBoy) Success(text, snip string, tags ...string) {
 	msg := s.getMessage(successType)
 	msg.Text = text
-	msg.AttachmentText = snip
+	msg.Snippet = snip
+	msg.Tags = tags
 
 	s.Post(msg)
 }
@@ -80,7 +82,7 @@ func (s *SlackBoy) Success(text, snip string) {
 func (s *SlackBoy) Info(text, snip string) {
 	msg := s.getMessage(infoType)
 	msg.Text = text
-	msg.AttachmentText = snip
+	msg.Snippet = snip
 
 	s.Post(msg)
 }
@@ -88,7 +90,7 @@ func (s *SlackBoy) Info(text, snip string) {
 func (s *SlackBoy) Warning(text, snip string) {
 	msg := s.getMessage(warningType)
 	msg.Text = text
-	msg.AttachmentText = snip
+	msg.Snippet = snip
 
 	s.Post(msg)
 }
@@ -96,7 +98,7 @@ func (s *SlackBoy) Warning(text, snip string) {
 func (s *SlackBoy) Error(text, snip string) {
 	msg := s.getMessage(errorType)
 	msg.Text = text
-	msg.AttachmentText = snip
+	msg.Snippet = snip
 
 	s.Post(msg)
 }
@@ -108,9 +110,14 @@ func (s *SlackBoy) Post(msg *Message) {
 	}
 
 	tags := []string{fmt.Sprintf("`env: %s`", s.opt.Env)}
-	if len(s.opt.Tags) > 0 {
-		for k, v := range s.opt.Tags {
-			tags = append(tags, fmt.Sprintf("`%s: %s`", k, v))
+	if len(s.opt.DefaultTags) > 0 {
+		for _, v := range s.opt.DefaultTags {
+			tags = append(tags, fmt.Sprintf("`%s`", v))
+		}
+	}
+	if len(msg.Tags) > 0 {
+		for _, v := range msg.Tags {
+			tags = append(tags, fmt.Sprintf("`%s`", v))
 		}
 	}
 	tagString := strings.Join(tags, " ")
@@ -122,13 +129,13 @@ func (s *SlackBoy) Post(msg *Message) {
 			map[string]interface{}{
 				"title":     msg.Text,
 				"color":     msg.AttachmentColor,
-				"text":      msg.AttachmentText + "\n" + tagString,
+				"text":      msg.Snippet + "\n" + tagString,
 				"mrkdwn_in": []string{"text"},
 			},
 		},
 	}
 
-	go s.post(payload)
+	s.post(payload)
 }
 
 func (s *SlackBoy) post(payload map[string]interface{}) {

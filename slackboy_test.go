@@ -4,9 +4,9 @@ import "testing"
 
 func TestPostToDefault(t *testing.T) {
 	opt := Options{
-		Env:        "production",
-		WebhookURL: "https://hooks.slack.com/services/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",
-		Tags:       SlackboyTags{"host": "127.0.0.1"},
+		Env:         "production",
+		WebhookURL:  "https://hooks.slack.com/services/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",
+		DefaultTags: []string{"host: 127.0.0.1"},
 	}
 	slackBoy := New(opt)
 
@@ -16,9 +16,9 @@ func TestPostToDefault(t *testing.T) {
 
 func TestPostToDefault2(t *testing.T) {
 	opt := Options{
-		Env:        "production",
-		WebhookURL: "https://hooks.slack.com/services/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",
-		Tags:       SlackboyTags{"host": "127.0.0.1"},
+		Env:         "production",
+		WebhookURL:  "https://hooks.slack.com/services/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",
+		DefaultTags: []string{"host: 127.0.0.1"},
 	}
 	slackBoy := New(opt)
 
@@ -26,9 +26,9 @@ func TestPostToDefault2(t *testing.T) {
 	slackBoy.Info("Info 1", "Info description 1")
 
 	opt2 := Options{
-		Env:        "production",
-		WebhookURL: "https://hooks.slack.com/services/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",
-		Tags:       SlackboyTags{"host": "127.0.0.1", "user": "@ariefrahmansyah"},
+		Env:         "production",
+		WebhookURL:  "https://hooks.slack.com/services/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",
+		DefaultTags: []string{"host: 127.0.0.1", "user: @ariefrahmansyah"},
 	}
 	slackBoy2 := New(opt2)
 
@@ -44,11 +44,26 @@ func TestPostToSuccess(t *testing.T) {
 		InfoChannel:    "info",
 		WarningChannel: "warning",
 		ErrorChannel:   "error",
-		Tags:           SlackboyTags{"host": "127.0.0.1"},
+		DefaultTags:    []string{"host: 127.0.0.1"},
 	}
 	slackBoy := New(opt)
 
 	slackBoy.Success("Success 1", "Success description 1")
+}
+
+func TestPostToSuccessWithTags(t *testing.T) {
+	opt := Options{
+		Env:            "production",
+		WebhookURL:     "https://hooks.slack.com/services/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",
+		SuccessChannel: "success",
+		InfoChannel:    "info",
+		WarningChannel: "warning",
+		ErrorChannel:   "error",
+		DefaultTags:    []string{"host: 127.0.0.1"},
+	}
+	slackBoy := New(opt)
+
+	slackBoy.Success("Success 1", "Success description 1", []string{"user: @ariefrahmansyah"}...)
 }
 
 func TestPostToInfo(t *testing.T) {
@@ -59,7 +74,7 @@ func TestPostToInfo(t *testing.T) {
 		InfoChannel:    "info",
 		WarningChannel: "warning",
 		ErrorChannel:   "error",
-		Tags:           SlackboyTags{"host": "127.0.0.1"},
+		DefaultTags:    []string{"host: 127.0.0.1"},
 	}
 	slackBoy := New(opt)
 
@@ -74,7 +89,7 @@ func TestPostToInfoWithLink(t *testing.T) {
 		InfoChannel:    "info",
 		WarningChannel: "warning",
 		ErrorChannel:   "error",
-		Tags:           SlackboyTags{"host": "127.0.0.1"},
+		DefaultTags:    []string{"host: 127.0.0.1"},
 	}
 	slackBoy := New(opt)
 
