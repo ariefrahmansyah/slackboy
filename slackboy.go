@@ -128,7 +128,7 @@ func (s *SlackBoy) Post(msg *Message) {
 		},
 	}
 
-	s.post(payload)
+	go s.post(payload)
 }
 
 func (s *SlackBoy) post(payload map[string]interface{}) {
