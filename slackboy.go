@@ -124,11 +124,10 @@ func (s *SlackBoy) Post(msg *Message) {
 
 	payload := map[string]interface{}{
 		"channel":    channel,
-		"text":       "*" + msg.Text + "*",
 		"link_names": 1,
 		"attachments": []map[string]interface{}{
 			map[string]interface{}{
-				// "title":     msg.Text,
+				"title":     msg.Text,
 				"color":     msg.AttachmentColor,
 				"text":      msg.Snippet + "\n" + tagString,
 				"mrkdwn_in": []string{"text"},
