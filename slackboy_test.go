@@ -1,12 +1,15 @@
 package slackboy
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestPostToDefault(t *testing.T) {
 	opt := Options{
 		Env:         "production",
 		WebhookURL:  "https://hooks.slack.com/services/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",
-		DefaultTags: []string{"host: 127.0.0.1"},
+		DefaultTags: []string{"host: 127.0.0.1", "app: slackboy"},
 	}
 	slackBoy := New(opt)
 
@@ -122,4 +125,76 @@ func TestPostToError(t *testing.T) {
 	slackBoy := New(opt)
 
 	slackBoy.Error("Error 1", "Error description 1")
+}
+
+func TestSortTags(t *testing.T) {
+	type args struct {
+		tags []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			"1",
+			args{
+				[]string{"env: production", "app: slackboy"},
+			},
+			[]string{"app: slackboy", "env: production"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			SortTags(tt.args.tags)
+
+			if got := tt.args.tags; !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SortTags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSlackBoy_GetTags(t *testing.T) {
+	type fields struct {
+		message messageMap
+		opt     Options
+	}
+	type args struct {
+		msg Message
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			"empty",
+			fields{
+				message: messageMap{},
+				opt: Options{
+					Env:         "",
+					DefaultTags: []string{},
+				},
+			},
+			args{
+				msg: Message{
+					Tags: []string{},
+				},
+			},
+			"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &SlackBoy{
+				message: tt.fields.message,
+				opt:     tt.fields.opt,
+			}
+			if got := s.GetTags(tt.args.msg); got != tt.want {
+				t.Errorf("SlackBoy.GetTags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -109,18 +110,7 @@ func (s *SlackBoy) Post(msg *Message) {
 		channel = s.opt.DefaultChannel
 	}
 
-	tags := []string{fmt.Sprintf("`env: %s`", s.opt.Env)}
-	if len(s.opt.DefaultTags) > 0 {
-		for _, v := range s.opt.DefaultTags {
-			tags = append(tags, fmt.Sprintf("`%s`", v))
-		}
-	}
-	if len(msg.Tags) > 0 {
-		for _, v := range msg.Tags {
-			tags = append(tags, fmt.Sprintf("`%s`", v))
-		}
-	}
-	tagString := strings.Join(tags, " ")
+	tagsString := s.GetTags(*msg)
 
 	payload := map[string]interface{}{
 		"channel":    channel,
@@ -129,7 +119,7 @@ func (s *SlackBoy) Post(msg *Message) {
 			map[string]interface{}{
 				"title":     msg.Text,
 				"color":     msg.AttachmentColor,
-				"text":      msg.Snippet + "\n" + tagString,
+				"text":      msg.Snippet + "\n" + tagsString,
 				"mrkdwn_in": []string{"text"},
 			},
 		},
@@ -163,4 +153,43 @@ func (s *SlackBoy) post(payload map[string]interface{}) {
 	}
 
 	return
+}
+
+func (s *SlackBoy) GetTags(msg Message) string {
+	tags := []string{}
+	tagsString := ""
+
+	if s.opt.Env != "" {
+		tags = append(tags, fmt.Sprintf("`env: %s`", s.opt.Env))
+	}
+
+	if len(s.opt.DefaultTags) > 0 {
+		for _, v := range s.opt.DefaultTags {
+			tags = append(tags, fmt.Sprintf("`%s`", v))
+		}
+	}
+
+	if len(msg.Tags) > 0 {
+		for _, v := range msg.Tags {
+			tags = append(tags, fmt.Sprintf("`%s`", v))
+		}
+	}
+
+	if len(tags) > 0 {
+		SortTags(tags)
+		tagsString = strings.Join(tags, " ")
+	}
+
+	return tagsString
+}
+
+type tagsSorter []string
+
+func (tags tagsSorter) Len() int           { return len(tags) }
+func (tags tagsSorter) Swap(i, j int)      { tags[i], tags[j] = tags[j], tags[i] }
+func (tags tagsSorter) Less(i, j int) bool { return tags[i] < tags[j] }
+
+// SortTags sorts payment tags by total price descending
+func SortTags(tags []string) {
+	sort.Sort(tagsSorter(tags))
 }
