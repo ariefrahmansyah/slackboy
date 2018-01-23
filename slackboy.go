@@ -38,6 +38,7 @@ type messageMap map[int]*Message
 type Options struct {
 	Env         string
 	DefaultTags []string
+	Synchronous bool
 
 	WebhookURL     string
 	DefaultChannel string
@@ -63,7 +64,7 @@ func New(o Options) *SlackBoy {
 	return &SlackBoy{message: msgMap, opt: o}
 }
 
-func (s *SlackBoy) getMessage(msgType int) *Message {
+func (s *SlackBoy) getMessageType(msgType int) *Message {
 	if msg, ok := s.message[msgType]; ok {
 		return msg
 	}
@@ -72,7 +73,7 @@ func (s *SlackBoy) getMessage(msgType int) *Message {
 }
 
 func (s *SlackBoy) Success(text, snip string, tags ...string) {
-	msg := s.getMessage(successType)
+	msg := s.getMessageType(successType)
 	msg.Text = text
 	msg.Snippet = snip
 	msg.Tags = tags
@@ -81,7 +82,7 @@ func (s *SlackBoy) Success(text, snip string, tags ...string) {
 }
 
 func (s *SlackBoy) Info(text, snip string) {
-	msg := s.getMessage(infoType)
+	msg := s.getMessageType(infoType)
 	msg.Text = text
 	msg.Snippet = snip
 
@@ -89,7 +90,7 @@ func (s *SlackBoy) Info(text, snip string) {
 }
 
 func (s *SlackBoy) Warning(text, snip string) {
-	msg := s.getMessage(warningType)
+	msg := s.getMessageType(warningType)
 	msg.Text = text
 	msg.Snippet = snip
 
@@ -97,7 +98,7 @@ func (s *SlackBoy) Warning(text, snip string) {
 }
 
 func (s *SlackBoy) Error(text, snip string) {
-	msg := s.getMessage(errorType)
+	msg := s.getMessageType(errorType)
 	msg.Text = text
 	msg.Snippet = snip
 
@@ -125,7 +126,11 @@ func (s *SlackBoy) Post(msg *Message) {
 		},
 	}
 
-	go s.post(payload)
+	if !s.opt.Synchronous {
+		go s.post(payload)
+	} else {
+		s.post(payload)
+	}
 }
 
 func (s *SlackBoy) post(payload map[string]interface{}) {
