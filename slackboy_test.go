@@ -3,7 +3,6 @@ package slackboy
 import (
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"reflect"
 	"testing"
@@ -11,9 +10,7 @@ import (
 )
 
 var webhookSuccess *httptest.Server
-var webhookSuccessURL *url.URL
 var webhookFail *httptest.Server
-var webhookFailURL *url.URL
 
 func testMain(m *testing.M) int {
 	webhookSuccess = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,14 +18,12 @@ func testMain(m *testing.M) int {
 		w.Write([]byte("ok"))
 	}))
 	defer webhookSuccess.Close()
-	webhookSuccessURL, _ = url.Parse(webhookSuccess.URL)
 
 	webhookFail = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("not ok"))
 	}))
 	defer webhookFail.Close()
-	webhookFailURL, _ = url.Parse(webhookFail.URL)
 
 	return m.Run()
 }
@@ -124,7 +119,7 @@ func TestSlackBoy_getMessageType(t *testing.T) {
 func TestPostDefault(t *testing.T) {
 	opt := Options{
 		Env:         "production",
-		WebhookURL:  webhookSuccessURL.String(),
+		WebhookURL:  webhookSuccess.URL,
 		DefaultTags: []string{"host: 127.0.0.1", "app: slackboy"},
 	}
 	slackBoy := New(opt)
@@ -138,7 +133,7 @@ func TestPostDefault(t *testing.T) {
 func TestPostSuccessWithTags(t *testing.T) {
 	opt := Options{
 		Env:            "production",
-		WebhookURL:     "https://hooks.slack.com/services/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",
+		WebhookURL:     webhookSuccess.URL,
 		SuccessChannel: "success",
 		InfoChannel:    "info",
 		WarningChannel: "warning",
@@ -153,7 +148,7 @@ func TestPostSuccessWithTags(t *testing.T) {
 func TestPostInfoWithLink(t *testing.T) {
 	opt := Options{
 		Env:            "production",
-		WebhookURL:     "https://hooks.slack.com/services/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",
+		WebhookURL:     webhookSuccess.URL,
 		SuccessChannel: "success",
 		InfoChannel:    "info",
 		WarningChannel: "warning",
@@ -168,7 +163,7 @@ func TestPostInfoWithLink(t *testing.T) {
 func TestPostFail(t *testing.T) {
 	opt := Options{
 		Env:         "production",
-		WebhookURL:  webhookFailURL.String(),
+		WebhookURL:  webhookFail.URL,
 		DefaultTags: []string{"host: 127.0.0.1", "app: slackboy"},
 	}
 	slackBoy := New(opt)
@@ -179,7 +174,7 @@ func TestPostFail(t *testing.T) {
 func TestPostAsync(t *testing.T) {
 	opt := Options{
 		Env:         "production",
-		WebhookURL:  webhookSuccessURL.String(),
+		WebhookURL:  webhookSuccess.URL,
 		Synchronous: true,
 		DefaultTags: []string{"host: 127.0.0.1", "app: slackboy"},
 	}
@@ -187,10 +182,10 @@ func TestPostAsync(t *testing.T) {
 
 	slackBoy.Success("Success 1", "Success description 1")
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 }
 
-func TestSlackBoy_GetTags(t *testing.T) {
+func TestSlackBoy_getTags(t *testing.T) {
 	type fields struct {
 		message messageMap
 		opt     Options
@@ -227,8 +222,8 @@ func TestSlackBoy_GetTags(t *testing.T) {
 				message: tt.fields.message,
 				opt:     tt.fields.opt,
 			}
-			if got := s.GetTags(tt.args.msg); got != tt.want {
-				t.Errorf("SlackBoy.GetTags() = %v, want %v", got, tt.want)
+			if got := s.getTags(tt.args.msg); got != tt.want {
+				t.Errorf("SlackBoy.getTags() = %v, want %v", got, tt.want)
 			}
 		})
 	}

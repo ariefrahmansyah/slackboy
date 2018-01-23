@@ -7,9 +7,9 @@ SlackBoy will help you send Slack webhooks message to specify channel depending 
 import "github.com/ariefrahmansyah/slackboy"
 
 slackboyOpt := slackboy.Options{
-        Env:         opt.Env,
-        DefaultTags: opt.DefaultTags,
-        WebhookURL:  opt.WebhookURL,
+        Env:         "production"
+        DefaultTags: []string{"host: 127.0.0.1", "app: slackboy",
+        WebhookURL:  "https://hooks.slack.com/qwertyuiop",
 }
 slackBoy := slackboy.New(slackboyOpt)
 

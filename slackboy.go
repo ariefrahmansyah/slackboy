@@ -23,8 +23,7 @@ const (
 	errorType
 )
 
-type SlackboyTags map[string]string
-
+// Message is the webhook message contains channel data, text, snippet, tags and attachment color.
 type Message struct {
 	Channel         string
 	Text            string
@@ -35,6 +34,7 @@ type Message struct {
 
 type messageMap map[int]*Message
 
+// Options to create new slackboy object.
 type Options struct {
 	Env         string
 	DefaultTags []string
@@ -48,11 +48,13 @@ type Options struct {
 	ErrorChannel   string
 }
 
+// SlackBoy object.
 type SlackBoy struct {
 	message messageMap
 	opt     Options
 }
 
+// New returns new *SlackBoy object.
 func New(o Options) *SlackBoy {
 	msgMap := messageMap{}
 
@@ -72,6 +74,7 @@ func (s *SlackBoy) getMessageType(msgType int) *Message {
 	return &Message{}
 }
 
+// Success sends webhook with green attachment color.
 func (s *SlackBoy) Success(text, snip string, tags ...string) {
 	msg := s.getMessageType(successType)
 	msg.Text = text
@@ -81,6 +84,7 @@ func (s *SlackBoy) Success(text, snip string, tags ...string) {
 	s.Post(msg)
 }
 
+// Info sends webhook with blue attachment color.
 func (s *SlackBoy) Info(text, snip string) {
 	msg := s.getMessageType(infoType)
 	msg.Text = text
@@ -89,6 +93,7 @@ func (s *SlackBoy) Info(text, snip string) {
 	s.Post(msg)
 }
 
+// Warning sends webhook with orange attachment color.
 func (s *SlackBoy) Warning(text, snip string) {
 	msg := s.getMessageType(warningType)
 	msg.Text = text
@@ -97,6 +102,7 @@ func (s *SlackBoy) Warning(text, snip string) {
 	s.Post(msg)
 }
 
+// Error sends webhook with red attachment color.
 func (s *SlackBoy) Error(text, snip string) {
 	msg := s.getMessageType(errorType)
 	msg.Text = text
@@ -105,13 +111,14 @@ func (s *SlackBoy) Error(text, snip string) {
 	s.Post(msg)
 }
 
+// Post posts specified message.
 func (s *SlackBoy) Post(msg *Message) {
 	channel := msg.Channel
 	if channel == "" {
 		channel = s.opt.DefaultChannel
 	}
 
-	tagsString := s.GetTags(*msg)
+	tagsString := s.getTags(*msg)
 
 	payload := map[string]interface{}{
 		"channel":    channel,
@@ -160,7 +167,7 @@ func (s *SlackBoy) post(payload map[string]interface{}) {
 	return
 }
 
-func (s *SlackBoy) GetTags(msg Message) string {
+func (s *SlackBoy) getTags(msg Message) string {
 	tags := []string{}
 	tagsString := ""
 
